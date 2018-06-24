@@ -20,8 +20,10 @@
 package org.almrangers.auth.aad;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -60,9 +62,9 @@ public class JSONHelper {
    *
    * @param jsonObject The jsonObject from where the attributes are to be copied.
    * @param destObject The object where the attributes should be copied into.
-   * @throws Exception Throws a Exception when the operation are unsuccessful.
+   * @throws ReflectiveOperationException Throws a Exception when the operation are unsuccessful.
    */
-  public static <T> void convertJSONObjectToDirectoryObject(JSONObject jsonObject, T destObject) throws Exception {
+  public static <T> void convertJSONObjectToDirectoryObject(JSONObject jsonObject, T destObject) throws ReflectiveOperationException {
 
     // Get the list of all the field names.
     Field[] fieldList = destObject.getClass().getDeclaredFields();

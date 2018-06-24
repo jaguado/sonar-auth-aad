@@ -28,28 +28,33 @@ package org.almrangers.auth.aad;
 
 import org.junit.Test;
 import org.sonar.api.config.PropertyDefinitions;
-import org.sonar.api.config.Settings;
 import org.sonar.api.config.internal.MapSettings;
 
 import static org.almrangers.auth.aad.AadSettings.LOGIN_STRATEGY_DEFAULT_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AadSettingsTest {
-  Settings settings = new MapSettings(new PropertyDefinitions(AadSettings.definitions()));
+  MapSettings settings = new MapSettings(new PropertyDefinitions(AadSettings.authenticationProperties()));
 
-  AadSettings underTest = new AadSettings(settings);
+  AadSettings underTest = new AadSettings(settings.asConfig());
 
   @Test
   public void is_enabled() {
+    setSettings(true);
+    assertThat(underTest.isEnabled()).isTrue();
+  }
+
+  @Test
+  public void is_disabled() {
+    setSettings(false);
+    assertThat(underTest.isEnabled()).isFalse();
+  }
+
+  private void setSettings(boolean enabled) {
     settings.setProperty("sonar.auth.aad.clientId.secured", "id");
     settings.setProperty("sonar.auth.aad.clientSecret.secured", "secret");
     settings.setProperty("sonar.auth.aad.loginStrategy", LOGIN_STRATEGY_DEFAULT_VALUE);
-
-    settings.setProperty("sonar.auth.aad.enabled", true);
-    assertThat(underTest.isEnabled()).isTrue();
-
-    settings.setProperty("sonar.auth.aad.enabled", false);
-    assertThat(underTest.isEnabled()).isFalse();
+    settings.setProperty("sonar.auth.aad.enabled", enabled);
   }
 
   @Test
@@ -87,33 +92,41 @@ public class AadSettingsTest {
 
   @Test
   public void default_login_strategy_is_unique_login() {
-    assertThat(underTest.loginStrategy()).isEqualTo(AadSettings.LOGIN_STRATEGY_UNIQUE);
+    assertThat(underTest.loginStrategy().get()).isEqualTo(AadSettings.LOGIN_STRATEGY_UNIQUE);
   }
 
   @Test
   public void return_client_id() {
     settings.setProperty("sonar.auth.aad.clientId.secured", "id");
-    assertThat(underTest.clientId()).isEqualTo("id");
+    assertThat(underTest.clientId().get()).isEqualTo("id");
   }
 
   @Test
   public void return_client_secret() {
     settings.setProperty("sonar.auth.aad.clientSecret.secured", "secret");
-    assertThat(underTest.clientSecret()).isEqualTo("secret");
+    assertThat(underTest.clientSecret().get()).isEqualTo("secret");
   }
 
   @Test
   public void allow_users_to_sign_up() {
     settings.setProperty("sonar.auth.aad.allowUsersToSignUp", "true");
-    assertThat(underTest.allowUsersToSignUp()).isTrue();
-
-    settings.setProperty("sonar.auth.aad.allowUsersToSignUp", "false");
-    assertThat(underTest.allowUsersToSignUp()).isFalse();
+    assertThat(underTest.allowUsersToSignUp().get()).isTrue();
   }
 
   @Test
+  public void prohibit_users_to_sign_up() {
+    settings.setProperty("sonar.auth.aad.allowUsersToSignUp", "false");
+    assertThat(underTest.allowUsersToSignUp().get()).isFalse();
+  }
+  
+  @Test
   public void definitions() {
-    assertThat(AadSettings.definitions()).hasSize(8);
+    assertThat(AadSettings.authenticationProperties()).hasSize(7);
+  }
+  
+  @Test
+  public void groupProperties() {
+    assertThat(AadSettings.groupProperties()).hasSize(1);
   }
 
 }

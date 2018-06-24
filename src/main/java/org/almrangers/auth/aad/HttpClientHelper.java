@@ -61,7 +61,7 @@ public class HttpClientHelper {
   public static JSONObject processGoodRespStr(int responseCode, String goodRespStr) throws JSONException {
     JSONObject response = new JSONObject();
     response.put("responseCode", responseCode);
-    if (goodRespStr.equalsIgnoreCase("")) {
+    if ("".equalsIgnoreCase(goodRespStr)) {
       response.put("responseMsg", "");
     } else {
       response.put("responseMsg", new JSONObject(goodRespStr));
@@ -82,7 +82,7 @@ public class HttpClientHelper {
 
     JSONObject response = new JSONObject();
     response.put("responseCode", responseCode);
-    if (responseMsg.equalsIgnoreCase("")) { // good response is empty string
+    if ("".equalsIgnoreCase(responseMsg)) { // good response is empty string
       response.put("responseMsg", "");
     } else { // bad response is json string
       JSONObject errorObject = new JSONObject(responseMsg).optJSONObject("odata.error");
