@@ -92,31 +92,31 @@ public class AadSettingsTest {
 
   @Test
   public void default_login_strategy_is_unique_login() {
-    assertThat(underTest.loginStrategy().get()).isEqualTo(AadSettings.LOGIN_STRATEGY_UNIQUE);
+    assertThat(underTest.loginStrategy()).isEqualTo(AadSettings.LOGIN_STRATEGY_UNIQUE);
   }
 
   @Test
   public void return_client_id() {
     settings.setProperty("sonar.auth.aad.clientId.secured", "id");
-    assertThat(underTest.clientId().get()).isEqualTo("id");
+    assertThat(underTest.clientId()).isEqualTo("id");
   }
 
   @Test
   public void return_client_secret() {
     settings.setProperty("sonar.auth.aad.clientSecret.secured", "secret");
-    assertThat(underTest.clientSecret().get()).isEqualTo("secret");
+    assertThat(underTest.clientSecret()).isEqualTo("secret");
   }
 
   @Test
   public void allow_users_to_sign_up() {
     settings.setProperty("sonar.auth.aad.allowUsersToSignUp", "true");
-    assertThat(underTest.allowUsersToSignUp().get()).isTrue();
+    assertThat(underTest.allowUsersToSignUp()).isTrue();
   }
 
   @Test
   public void prohibit_users_to_sign_up() {
     settings.setProperty("sonar.auth.aad.allowUsersToSignUp", "false");
-    assertThat(underTest.allowUsersToSignUp().get()).isFalse();
+    assertThat(underTest.allowUsersToSignUp()).isFalse();
   }
   
   @Test

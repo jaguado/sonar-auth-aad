@@ -145,40 +145,39 @@ public class AadSettings {
     ));
   }
 
-  public Optional<String> clientId() {
-    return settings.get(CLIENT_ID);
+  public String clientId() {
+    return settings.get(CLIENT_ID).orElse(null);
   }
 
-  public Optional<Boolean> allowUsersToSignUp() {
-    return settings.getBoolean(ALLOW_USERS_TO_SIGN_UP);
+  public Boolean allowUsersToSignUp() {
+    return settings.getBoolean(ALLOW_USERS_TO_SIGN_UP).orElse(Boolean.FALSE);
   }
 
-  public Optional<Boolean> enableGroupSync() {
-    return settings.getBoolean(ENABLE_GROUPS_SYNC);
+  public Boolean enableGroupSync() {
+    return settings.getBoolean(ENABLE_GROUPS_SYNC).orElse(Boolean.FALSE);
   }
 
-  public Optional<Boolean> multiTenant() {
-    return settings.getBoolean(MULTI_TENANT);
+  public Boolean multiTenant() {
+    return settings.getBoolean(MULTI_TENANT).orElse(Boolean.FALSE);
   }
 
-  public Optional<String> tenantId() {
-    return settings.get(TENANT_ID);
+  public String tenantId() {
+    return settings.get(TENANT_ID).orElse(null);
   }
 
-  public Optional<String> clientSecret() {
-    return settings.get(CLIENT_SECRET);
+  public String clientSecret() {
+    return settings.get(CLIENT_SECRET).orElse(null);
   }
 
   public boolean isEnabled() {
-    return settings.getBoolean(ENABLED).orElse(Boolean.FALSE) && clientId().isPresent() 
-                    && clientSecret().isPresent() && loginStrategy().isPresent();
+    return settings.getBoolean(ENABLED).orElse(Boolean.FALSE) && clientId() != null && clientSecret() != null && loginStrategy() != null;
   }
 
   private String getEndpoint() {
-    if (multiTenant().orElse(Boolean.FALSE)) {
+    if (multiTenant()) {
       return COMMON_URL;
     } else {
-      return tenantId().orElse(null);
+      return tenantId();
     }
   }
 
@@ -190,7 +189,7 @@ public class AadSettings {
     return format("%s/%s/%s", ROOT_URL, getEndpoint(), AUTHORITY_URL);
   }
 
-  public Optional<String> loginStrategy() {
-    return settings.get(LOGIN_STRATEGY);
+  public String loginStrategy() {
+    return settings.get(LOGIN_STRATEGY).orElse(null);
   }
 }

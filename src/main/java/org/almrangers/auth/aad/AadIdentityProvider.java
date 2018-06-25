@@ -99,13 +99,13 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
 
   @Override
   public boolean allowsUsersToSignUp() {
-    return settings.allowUsersToSignUp().orElse(Boolean.FALSE);
+    return settings.allowUsersToSignUp();
   }
 
   @Override
   public void init(InitContext context) {
     String state = context.generateCsrfState();
-    String authUrl = format(AUTH_REQUEST_FORMAT, settings.authorizationUrl(), settings.clientId().orElse(null),
+    String authUrl = format(AUTH_REQUEST_FORMAT, settings.authorizationUrl(), settings.clientId(),
                                context.getCallbackUrl(), state);
     context.redirectTo(authUrl);
   }
@@ -123,8 +123,7 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
       service = Executors.newFixedThreadPool(1);
       authContext = new AuthenticationContext(settings.authorityUrl(), false, service);
       URI url = new URI(context.getCallbackUrl());
-      ClientCredential clientCredt = new ClientCredential(settings.clientId().orElse(null), 
-                                                          settings.clientSecret().orElse(null));
+      ClientCredential clientCredt = new ClientCredential(settings.clientId(), settings.clientSecret());
       Future<AuthenticationResult> future = authContext.acquireTokenByAuthorizationCode(
         oAuthVerifier, url, clientCredt, SECURE_RESOURCE_URL, null);
       result = future.get();
@@ -135,7 +134,7 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
         .setLogin(getLogin(aadUser))
         .setName(aadUser.getGivenName() + " " + aadUser.getFamilyName())
         .setEmail(aadUser.getDisplayableId());
-      if (settings.enableGroupSync().orElse(Boolean.FALSE)) {
+      if (settings.enableGroupSync()) {
         userGroups = getUserGroupsMembership(result.getAccessToken(), result.getUserInfo().getUniqueId());
         userIdentityBuilder.setGroups(userGroups);
       }
@@ -151,7 +150,7 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
   }
 
   private String getLogin(UserInfo aadUser) {
-    String loginStrategy = settings.loginStrategy().orElse(null);
+    String loginStrategy = settings.loginStrategy();
     if (LOGIN_STRATEGY_UNIQUE.equals(loginStrategy)) {
       return generateUniqueLogin(aadUser);
     } else if (LOGIN_STRATEGY_PROVIDER_ID.equals(loginStrategy)) {
