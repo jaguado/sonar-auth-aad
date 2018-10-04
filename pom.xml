@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.almrangers.auth.aad</groupId>
     <artifactId>sonar-auth-aad-plugin</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
     <packaging>sonar-plugin</packaging>
     <name>Azure Active Directory (AAD) Authentication Plug-in for SonarQube</name>
     <description>This plug-in enables Azure Active Directory (AAD) users to automatically be sign up (a login is created
@@ -12,8 +12,8 @@
     <url>https://github.com/SonarQubeCommunity/sonar-auth-aad</url>
     <inceptionYear>2016</inceptionYear>
     <organization>
-        <name>Visual Studio ALM Rangers</name>
-        <url>https://aka.ms/vsarblog</url>
+        <name>ALM | DevOps Rangers</name>
+        <url>https://aka.ms/vsar</url>
     </organization>
     <licenses>
         <license>
