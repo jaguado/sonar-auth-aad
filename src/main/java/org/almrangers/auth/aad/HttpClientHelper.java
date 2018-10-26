@@ -29,6 +29,9 @@ import org.json.JSONObject;
 
 public class HttpClientHelper {
 
+  private static final String RESPONSE_MSG = "responseMsg";
+  private static final String RESPONSE_CODE = "responseCode";
+
   private HttpClientHelper() {
     // Static methods
   }
@@ -60,11 +63,11 @@ public class HttpClientHelper {
    */
   public static JSONObject processGoodRespStr(int responseCode, String goodRespStr) throws JSONException {
     JSONObject response = new JSONObject();
-    response.put("responseCode", responseCode);
-    if (goodRespStr.equalsIgnoreCase("")) {
-      response.put("responseMsg", "");
+    response.put(RESPONSE_CODE, responseCode);
+    if ("".equalsIgnoreCase(goodRespStr)) {
+      response.put(RESPONSE_MSG, "");
     } else {
-      response.put("responseMsg", new JSONObject(goodRespStr));
+      response.put(RESPONSE_MSG, new JSONObject(goodRespStr));
     }
 
     return response;
@@ -81,15 +84,15 @@ public class HttpClientHelper {
   public static JSONObject processBadRespStr(int responseCode, String responseMsg) throws JSONException {
 
     JSONObject response = new JSONObject();
-    response.put("responseCode", responseCode);
-    if (responseMsg.equalsIgnoreCase("")) { // good response is empty string
-      response.put("responseMsg", "");
+    response.put(RESPONSE_CODE, responseCode);
+    if ("".equalsIgnoreCase(responseMsg)) { // good response is empty string
+      response.put(RESPONSE_MSG, "");
     } else { // bad response is json string
       JSONObject errorObject = new JSONObject(responseMsg).optJSONObject("odata.error");
 
       String errorCode = errorObject.optString("code");
       String errorMsg = errorObject.optJSONObject("message").optString("value");
-      response.put("responseCode", responseCode);
+      response.put(RESPONSE_CODE, responseCode);
       response.put("errorCode", errorCode);
       response.put("errorMsg", errorMsg);
     }

@@ -40,6 +40,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
@@ -72,10 +74,7 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
 
   @Override
   public Display getDisplay() {
-    return Display.builder()
-      .setIconPath("/static/authaad/ms-symbol.svg")
-      .setBackgroundColor("#2F2F2F")
-      .build();
+    return Display.builder().setIconPath("/static/authaad/ms-symbol.svg").setBackgroundColor("#2F2F2F").build();
   }
 
   @Override
@@ -101,7 +100,8 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
   @Override
   public void init(InitContext context) {
     String state = context.generateCsrfState();
-    String authUrl = String.format(AUTH_REQUEST_FORMAT, settings.authorizationUrl(), settings.clientId(), context.getCallbackUrl(), state);
+    String authUrl = format(AUTH_REQUEST_FORMAT, settings.authorizationUrl(), settings.clientId(),
+        context.getCallbackUrl(), state);
     context.redirectTo(authUrl);
   }
 
@@ -119,16 +119,14 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
       authContext = new AuthenticationContext(settings.authorityUrl(), false, service);
       URI url = new URI(context.getCallbackUrl());
       ClientCredential clientCredt = new ClientCredential(settings.clientId(), settings.clientSecret());
-      Future<AuthenticationResult> future = authContext.acquireTokenByAuthorizationCode(
-        oAuthVerifier, url, clientCredt, settings.getGraphURL(), null);
+      Future<AuthenticationResult> future = authContext.acquireTokenByAuthorizationCode(oAuthVerifier, url, clientCredt,
+          settings.getGraphURL(), null);
       result = future.get();
 
       UserInfo aadUser = result.getUserInfo();
-      UserIdentity.Builder userIdentityBuilder = UserIdentity.builder()
-        .setProviderLogin(aadUser.getDisplayableId())
-        .setLogin(getLogin(aadUser))
-        .setName(aadUser.getGivenName() + " " + aadUser.getFamilyName())
-        .setEmail(aadUser.getDisplayableId());
+      UserIdentity.Builder userIdentityBuilder = UserIdentity.builder().setProviderLogin(aadUser.getDisplayableId())
+          .setLogin(getLogin(aadUser)).setName(aadUser.getGivenName() + " " + aadUser.getFamilyName())
+          .setEmail(aadUser.getDisplayableId());
       if (settings.enableGroupSync()) {
         userGroups = getUserGroupsMembership(result.getAccessToken(), result.getUserInfo().getUniqueId());
         userIdentityBuilder.setGroups(userGroups);
@@ -136,7 +134,7 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
       context.authenticate(userIdentityBuilder.build());
       context.redirectToRequestedPage();
     } catch (Exception e) {
-      LOGGER.error("Exception:" + e.toString());
+      LOGGER.error("Exception:" + e);
     } finally {
       if (service != null) {
         service.shutdown();
@@ -155,46 +153,46 @@ public class AadIdentityProvider implements OAuth2IdentityProvider {
     }
   }
 
-  URL getUrl(String userId, String nextPage) throws MalformedURLException {
-	  String url =  String.format(settings.getGraphMembershipUrl(), settings.tenantId(), userId);
-	  // Append odata query parameters for subsequent pages
-	if (null != nextPage) {
-		url += "&" + nextPage;
-	}
-	return new URL(url);
+  URL getUrl(String userId, @Nullable String nextPage) throws MalformedURLException {
+    String url = String.format(settings.getGraphMembershipUrl(), settings.tenantId(), userId);
+    // Append odata query parameters for subsequent pages
+    if (null != nextPage) {
+      url += "&" + nextPage;
+    }
+    return new URL(url);
   }
 
   public Set<String> getUserGroupsMembership(String accessToken, String userId) {
-	Set<String> userGroups = new HashSet<>();
-	String nextPage = null;
+    Set<String> userGroups = new HashSet<>();
+    String nextPage = null;
     try {
       do {
-    	  URL url = getUrl(userId, nextPage);
-	      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-	      connection.setRequestProperty("Authorization", accessToken);
-	      connection.setRequestProperty("Accept", "application/json;odata.metadata=minimal");
-	      String goodRespStr = HttpClientHelper.getResponseStringFromConn(connection, true);
-	      int responseCode = connection.getResponseCode();
-	      JSONObject response = HttpClientHelper.processGoodRespStr(responseCode, goodRespStr);
-	      JSONArray groups;
-	      groups = JSONHelper.fetchDirectoryObjectJSONArray(response);      
-	      AadGroup group;
-	      for (int i = 0; i < groups.length(); i++) {
-	        JSONObject thisUserJSONObject = groups.optJSONObject(i);
-	        group = new AadGroup();
-	        JSONHelper.convertJSONObjectToDirectoryObject(thisUserJSONObject, group);
-	        userGroups.add(group.getDisplayName());
-	      }
-	      nextPage = JSONHelper.fetchNextPageLink(response);
+        URL url = getUrl(userId, nextPage);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestProperty("Authorization", accessToken);
+        connection.setRequestProperty("Accept", "application/json;odata.metadata=minimal");
+        String goodRespStr = HttpClientHelper.getResponseStringFromConn(connection, true);
+        int responseCode = connection.getResponseCode();
+        JSONObject response = HttpClientHelper.processGoodRespStr(responseCode, goodRespStr);
+        JSONArray groups;
+        groups = JSONHelper.fetchDirectoryObjectJSONArray(response);
+        AadGroup group;
+        for (int i = 0; i < groups.length(); i++) {
+          JSONObject thisUserJSONObject = groups.optJSONObject(i);
+          group = new AadGroup();
+          JSONHelper.convertJSONObjectToDirectoryObject(thisUserJSONObject, group);
+          userGroups.add(group.getDisplayName());
+        }
+        nextPage = JSONHelper.fetchNextPageLink(response);
       } while (StringUtils.isNotEmpty(nextPage));
     } catch (Exception e) {
       LOGGER.error(e.toString());
     }
     return userGroups;
   }
-  
+
   private String generateUniqueLogin(UserInfo aadUser) {
-    return String.format("%s@%s", aadUser.getDisplayableId(), getKey());
+    return format("%s@%s", aadUser.getDisplayableId(), getKey());
   }
 
 }

@@ -26,10 +26,12 @@
  */
 package org.almrangers.auth.aad;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.sonar.api.config.PropertyDefinition;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.Configuration;
 import org.sonar.api.server.ServerSide;
 
 import static java.lang.String.format;
@@ -56,9 +58,9 @@ public class AadSettings {
   protected static final String LOGIN_STRATEGY_DEFAULT_VALUE = LOGIN_STRATEGY_UNIQUE;
   protected static final String MULTI_TENANT = "sonar.auth.aad.multiTenant";
 
-  protected static final String CATEGORY = "Azure Active Directory";
-  protected static final String SUBCATEGORY = "Authentication";
-  protected static final String GROUPSYNCSUBCATEGORY = "Groups Synchronization";
+  protected static final String LOCATIONCATEGORY = "(1) Azure Active Directory";
+  protected static final String AUTENTICATIONCATEGORY = "(2) Authentication";
+  protected static final String GROUPSYNCSUBCATEGORY = "(3) Groups Synchronization";
 
   protected static final String LOGIN_URL = "https://login.microsoftonline.com";
   protected static final String LOGIN_URL_USGOV = "https://login.microsoftonline.us";
@@ -75,19 +77,18 @@ public class AadSettings {
   protected static final String AUTH_REQUEST_FORMAT = "%s?client_id=%s&response_type=code&redirect_uri=%s&state=%s&scope=openid";
   protected static final String GROUPS_REQUEST_FORMAT = "/v1.0/%s/users/%s/memberOf";
 
-  private final Settings settings;
+  private final Configuration  settings;
 
-  public AadSettings(Settings settings) {
+  public AadSettings(Configuration  settings) {
     this.settings = settings;
   }
 
-  public static List<PropertyDefinition> definitions() {
-    return Arrays.asList(
+  public static List<PropertyDefinition> authenticationProperties() {
+    return new ArrayList<>(Arrays.asList(
       PropertyDefinition.builder(ENABLED)
         .name("Enabled")
         .description("Enable Azure AD users to login. Value is ignored if client ID and secret are not defined.")
-        .category(CATEGORY)
-        .subCategory(SUBCATEGORY)
+        .subCategory(AUTENTICATIONCATEGORY)
         .type(BOOLEAN)
         .defaultValue(valueOf(false))
         .index(1)
@@ -95,22 +96,19 @@ public class AadSettings {
       PropertyDefinition.builder(CLIENT_ID)
         .name("Client ID")
         .description("Client ID provided by Azure AD when registering the application.")
-        .category(CATEGORY)
-        .subCategory(SUBCATEGORY)
+        .subCategory(AUTENTICATIONCATEGORY)
         .index(2)
         .build(),
       PropertyDefinition.builder(CLIENT_SECRET)
         .name("Client Secret")
         .description("Client key provided by Azure AD when registering the application.")
-        .category(CATEGORY)
-        .subCategory(SUBCATEGORY)
+        .subCategory(AUTENTICATIONCATEGORY)
         .index(3)
         .build(),
       PropertyDefinition.builder(MULTI_TENANT)
         .name("Multi-tenant Azure Application")
         .description("multi-tenant application")
-        .category(CATEGORY)
-        .subCategory(SUBCATEGORY)
+        .subCategory(AUTENTICATIONCATEGORY)
         .type(BOOLEAN)
         .defaultValue(valueOf(false))
         .index(4)
@@ -118,15 +116,13 @@ public class AadSettings {
       PropertyDefinition.builder(TENANT_ID)
         .name("Tenant ID")
         .description("Azure AD Tenant ID.")
-        .category(CATEGORY)
-        .subCategory(SUBCATEGORY)
+        .subCategory(AUTENTICATIONCATEGORY)
         .index(5)
         .build(),
       PropertyDefinition.builder(ALLOW_USERS_TO_SIGN_UP)
         .name("Allow users to sign-up")
         .description("Allow new users to authenticate. When set to 'false', only existing users will be able to authenticate to the server.")
-        .category(CATEGORY)
-        .subCategory(SUBCATEGORY)
+        .subCategory(AUTENTICATIONCATEGORY)
         .type(BOOLEAN)
         .defaultValue(valueOf(true))
         .index(6)
@@ -136,62 +132,69 @@ public class AadSettings {
         .description(format("When the login strategy is set to '%s', the user's login will be auto-generated the first time so that it is unique. " +
             "When the login strategy is set to '%s', the user's login will be the Azure AD login.",
           LOGIN_STRATEGY_UNIQUE, LOGIN_STRATEGY_PROVIDER_ID))
-        .category(CATEGORY)
-        .subCategory(SUBCATEGORY)
+        .subCategory(AUTENTICATIONCATEGORY)
         .type(SINGLE_SELECT_LIST)
         .defaultValue(LOGIN_STRATEGY_DEFAULT_VALUE)
         .options(LOGIN_STRATEGY_UNIQUE, LOGIN_STRATEGY_PROVIDER_ID)
         .index(7)
-        .build(),
-      PropertyDefinition.builder(DIRECTORY_LOCATION)
-        .name("Directory Location")
-        .description("The location of the Azure installation. You normally won't need to change this.")
-        .category(CATEGORY)
-        .subCategory(SUBCATEGORY)
-        .type(SINGLE_SELECT_LIST)
-        .defaultValue(DIRECTORY_LOC_GLOBAL)
-        .options(DIRECTORY_LOC_GLOBAL, DIRECTORY_LOC_USGOV, DIRECTORY_LOC_DE, DIRECTORY_LOC_CN)
-        .index(8)
-        .build(),
-      PropertyDefinition.builder(ENABLE_GROUPS_SYNC)
+        .build()
+    ));
+  }
+
+  public static List<PropertyDefinition> groupProperties() {
+    return new ArrayList<>(Arrays.asList(
+      PropertyDefinition.builder(AadSettings.ENABLE_GROUPS_SYNC)
         .name("Enable Groups Synchronization")
-        .description("Enable groups synchronization from Azure AD to SonarQube, For each Azure AD group user belongs to, the user will be associated to a group with the same name(if it exists) in SonarQube.")
-        .category(CATEGORY)
+        .description("Enable groups synchronization from Azure AD to SonarQube, For each Azure AD group user belongs to,"
+                    + "the user will be associated to a group with the same name(if it exists) in SonarQube.")
         .subCategory(GROUPSYNCSUBCATEGORY)
         .type(BOOLEAN)
         .defaultValue(valueOf(false))
-        .index(9)
+        .index(1)
         .build()
-
-    );
+    ));
+  }
+  
+  public static List<PropertyDefinition> locationProperties() {
+    return new ArrayList<>(Arrays.asList(
+      PropertyDefinition.builder(AadSettings.DIRECTORY_LOCATION)
+        .name("Directory Location")
+        .description("The location of the Azure installation. You normally won't need to change this.")
+        .subCategory(LOCATIONCATEGORY)
+        .type(SINGLE_SELECT_LIST)
+        .defaultValue(DIRECTORY_LOC_GLOBAL)
+        .options(DIRECTORY_LOC_GLOBAL, DIRECTORY_LOC_USGOV, DIRECTORY_LOC_DE, DIRECTORY_LOC_CN)
+        .index(1)
+        .build()
+    ));
   }
 
   public String clientId() {
-    return settings.getString(CLIENT_ID);
+    return settings.get(CLIENT_ID).orElse(null);
   }
 
-  public boolean allowUsersToSignUp() {
-    return settings.getBoolean(ALLOW_USERS_TO_SIGN_UP);
+  public Boolean allowUsersToSignUp() {
+    return settings.getBoolean(ALLOW_USERS_TO_SIGN_UP).orElse(Boolean.FALSE);
   }
 
-  public boolean enableGroupSync() {
-    return settings.getBoolean(ENABLE_GROUPS_SYNC);
+  public Boolean enableGroupSync() {
+    return settings.getBoolean(ENABLE_GROUPS_SYNC).orElse(Boolean.FALSE);
   }
 
-  public boolean multiTenant() {
-    return settings.getBoolean(MULTI_TENANT);
+  public Boolean multiTenant() {
+    return settings.getBoolean(MULTI_TENANT).orElse(Boolean.FALSE);
   }
 
   public String tenantId() {
-    return settings.getString(TENANT_ID);
+    return settings.get(TENANT_ID).orElse(null);
   }
 
   public String clientSecret() {
-    return settings.getString(CLIENT_SECRET);
+    return settings.get(CLIENT_SECRET).orElse(null);
   }
 
   public boolean isEnabled() {
-    return settings.getBoolean(ENABLED) && clientId() != null && clientSecret() != null && loginStrategy() != null;
+    return settings.getBoolean(ENABLED).orElse(Boolean.FALSE) && clientId() != null && clientSecret() != null && loginStrategy() != null;
   }
 
   private String getEndpoint() {
@@ -203,7 +206,7 @@ public class AadSettings {
   }
 
   private String getLoginHost() {
-    String directoryLocation = settings.getString(DIRECTORY_LOCATION);
+    String directoryLocation = settings.get(DIRECTORY_LOCATION).orElse(DIRECTORY_LOC_GLOBAL);
 
     switch (directoryLocation) {
       case DIRECTORY_LOC_USGOV:
@@ -230,7 +233,7 @@ public class AadSettings {
   }
 
   public String getGraphURL() {
-    String directoryLocation = settings.getString(DIRECTORY_LOCATION);
+    String directoryLocation = settings.get(DIRECTORY_LOCATION).orElse(DIRECTORY_LOC_GLOBAL);
 
     switch (directoryLocation) {
       case DIRECTORY_LOC_USGOV:
@@ -253,6 +256,6 @@ public class AadSettings {
   }
 
   public String loginStrategy() {
-    return settings.getString(LOGIN_STRATEGY);
+    return settings.get(LOGIN_STRATEGY).orElse(null);
   }
 }

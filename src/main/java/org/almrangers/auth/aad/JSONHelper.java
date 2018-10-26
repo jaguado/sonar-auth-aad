@@ -20,12 +20,15 @@
 package org.almrangers.auth.aad;
 
 import java.lang.reflect.Field;
+
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class JSONHelper {
+
+  private static final String RESPONSE_MSG = "responseMsg";
 
   private JSONHelper() {
     // Utility class
@@ -40,7 +43,7 @@ public class JSONHelper {
    * @throws Exception
    */
   public static JSONArray fetchDirectoryObjectJSONArray(JSONObject jsonObject) {
-    return jsonObject.optJSONObject("responseMsg").optJSONArray("value");
+    return jsonObject.optJSONObject(RESPONSE_MSG).optJSONArray("value");
   }
 
   /**
@@ -51,7 +54,7 @@ public class JSONHelper {
    * @throws Exception
    */
   public static String fetchNextPageLink(JSONObject jsonObject) {
-    return jsonObject.optJSONObject("responseMsg").has("odata.nextLink") ? StringUtils.substringAfterLast(jsonObject.optJSONObject("responseMsg").get("odata.nextLink").toString(), "memberOf?") : null;
+    return jsonObject.optJSONObject(RESPONSE_MSG).has("odata.nextLink") ? StringUtils.substringAfterLast(jsonObject.optJSONObject(RESPONSE_MSG).get("odata.nextLink").toString(), "memberOf?") : null;
   }
 
   /**
@@ -60,9 +63,9 @@ public class JSONHelper {
    *
    * @param jsonObject The jsonObject from where the attributes are to be copied.
    * @param destObject The object where the attributes should be copied into.
-   * @throws Exception Throws a Exception when the operation are unsuccessful.
+   * @throws ReflectiveOperationException Throws a Exception when the operation are unsuccessful.
    */
-  public static <T> void convertJSONObjectToDirectoryObject(JSONObject jsonObject, T destObject) throws Exception {
+  public static <T> void convertJSONObjectToDirectoryObject(JSONObject jsonObject, T destObject) throws ReflectiveOperationException {
 
     // Get the list of all the field names.
     Field[] fieldList = destObject.getClass().getDeclaredFields();

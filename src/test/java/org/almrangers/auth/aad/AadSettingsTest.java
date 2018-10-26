@@ -28,28 +28,35 @@ package org.almrangers.auth.aad;
 
 import org.junit.Test;
 import org.sonar.api.config.PropertyDefinitions;
-import org.sonar.api.config.Settings;
 import org.sonar.api.config.internal.MapSettings;
 
 import static org.almrangers.auth.aad.AadSettings.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AadSettingsTest {
-  Settings settings = new MapSettings(new PropertyDefinitions(AadSettings.definitions()));
+import org.assertj.core.api.SoftAssertions;
 
-  AadSettings underTest = new AadSettings(settings);
+public class AadSettingsTest {
+  MapSettings settings = new MapSettings(new PropertyDefinitions(AadSettings.authenticationProperties()));
+
+  AadSettings underTest = new AadSettings(settings.asConfig());
 
   @Test
   public void is_enabled() {
+    setSettings(true);
+    assertThat(underTest.isEnabled()).isTrue();
+  }
+
+  @Test
+  public void is_disabled() {
+    setSettings(false);
+    assertThat(underTest.isEnabled()).isFalse();
+  }
+
+  private void setSettings(boolean enabled) {
     settings.setProperty("sonar.auth.aad.clientId.secured", "id");
     settings.setProperty("sonar.auth.aad.clientSecret.secured", "secret");
     settings.setProperty("sonar.auth.aad.loginStrategy", LOGIN_STRATEGY_DEFAULT_VALUE);
-
-    settings.setProperty("sonar.auth.aad.enabled", true);
-    assertThat(underTest.isEnabled()).isTrue();
-
-    settings.setProperty("sonar.auth.aad.enabled", false);
-    assertThat(underTest.isEnabled()).isFalse();
+    settings.setProperty("sonar.auth.aad.enabled", enabled);
   }
 
   @Test
@@ -69,23 +76,25 @@ public class AadSettingsTest {
   public void return_correct_urls() {
     //Azure Default "Global"
     settings.setProperty("sonar.auth.aad.directoryLocation", DIRECTORY_LOC_GLOBAL);
-    assertThat(underTest.authorizationUrl().startsWith("https://login.microsoftonline.com"));
-    assertThat(underTest.getGraphURL().startsWith("https://graph.microsoft.com"));
+    SoftAssertions softly = new SoftAssertions();
+    softly.assertThat(underTest.authorizationUrl().startsWith("https://login.microsoftonline.com")).isTrue();
+    softly.assertThat(underTest.getGraphURL().startsWith("https://graph.microsoft.com")).isTrue();
 
     //Azure US Gov
     settings.setProperty("sonar.auth.aad.directoryLocation", DIRECTORY_LOC_USGOV);
-    assertThat(underTest.authorizationUrl().startsWith("https://login.microsoftonline.us"));
-    assertThat(underTest.getGraphURL().startsWith("https://graph.microsoft.com"));
+    softly.assertThat(underTest.authorizationUrl().startsWith("https://login.microsoftonline.us")).isTrue();
+    softly.assertThat(underTest.getGraphURL().startsWith("https://graph.microsoft.com")).isTrue();
 
     //Azure Germany
     settings.setProperty("sonar.auth.aad.directoryLocation", DIRECTORY_LOC_DE);
-    assertThat(underTest.authorizationUrl().startsWith("https://login.microsoftonline.de"));
-    assertThat(underTest.getGraphURL().startsWith("https://graph.microsoft.de"));
+    softly.assertThat(underTest.authorizationUrl().startsWith("https://login.microsoftonline.de")).isTrue();
+    softly.assertThat(underTest.getGraphURL().startsWith("https://graph.microsoft.de")).isTrue();
 
     //Azure China
     settings.setProperty("sonar.auth.aad.directoryLocation", DIRECTORY_LOC_CN);
-    assertThat(underTest.authorizationUrl().startsWith("https://login.chinacloudapi.cn"));
-    assertThat(underTest.getGraphURL().startsWith("https://microsoftgraph.chinacloudapi.cn"));
+    softly.assertThat(underTest.authorizationUrl().startsWith("https://login.chinacloudapi.cn")).isTrue();
+    softly.assertThat(underTest.getGraphURL().startsWith("https://microsoftgraph.chinacloudapi.cn")).isTrue();
+    softly.assertAll();
   }
 
   @Test
@@ -129,14 +138,27 @@ public class AadSettingsTest {
   public void allow_users_to_sign_up() {
     settings.setProperty("sonar.auth.aad.allowUsersToSignUp", "true");
     assertThat(underTest.allowUsersToSignUp()).isTrue();
-
-    settings.setProperty("sonar.auth.aad.allowUsersToSignUp", "false");
-    assertThat(underTest.allowUsersToSignUp()).isFalse();
   }
 
   @Test
+  public void prohibit_users_to_sign_up() {
+    settings.setProperty("sonar.auth.aad.allowUsersToSignUp", "false");
+    assertThat(underTest.allowUsersToSignUp()).isFalse();
+  }
+  
+  @Test
   public void definitions() {
-    assertThat(AadSettings.definitions()).hasSize(9);
+    assertThat(AadSettings.authenticationProperties()).hasSize(7);
+  }
+  
+  @Test
+  public void groupProperties() {
+    assertThat(AadSettings.groupProperties()).hasSize(1);
   }
 
+  @Test
+  public void locationProperties() {
+    assertThat(AadSettings.locationProperties()).hasSize(1);
+  }
+  
 }
